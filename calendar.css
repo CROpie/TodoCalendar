@@ -1,0 +1,91 @@
+:root {
+    --calendar-background: black;
+    --BHS-height: 700px;
+}
+
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--calendar-background);
+}
+
+#title {
+    margin: 0rem 5rem;
+    color: white;
+    font-size: 3rem;
+    padding-left: 2rem;
+}
+
+#calendar-container {
+    margin: 0rem 1rem;
+    border: 2px solid red;
+    background-color: var(--calendar-background);
+    height: 100%;
+    display: grid;
+    width: 80vw;
+    grid-template-columns: repeat(7, 14.28%);
+    grid-template-rows: 50px repeat(6, 150px);
+}
+
+#data-container {
+    border: 2px solid lime;
+    width: 20vw;
+    margin-right: 1rem;
+}
+
+.date,
+.day {
+    border: 1px solid black;
+    background-color: white;
+    padding: 0.5rem;
+}
+
+.day {
+    font-size: 2rem;
+}
+
+.date:hover {
+    background-color: blueviolet;
+}
+
+.date[data-date='blank'] {
+    background-color: var(--calendar-background);
+    border: none;
+}
+
+.todo {
+    font-size: 1em;
+
+    border-radius: 1rem;
+    background-color: lightgreen;
+    margin: 0.25rem 0.5rem 0rem 0.5rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+}
+
+.todo:hover {
+    background-color: yellow;
+}
+
+#BHS-container {
+    display: flex;
+}
+
+.data-div {
+    margin-bottom: 3rem;
+    padding: 1rem;
+}
+
+.data-heading {
+    color: yellow;
+    margin-left: 1rem;
+    font-size: 1.5rem;
+}
+
+.data {
+    color: white;
+}
