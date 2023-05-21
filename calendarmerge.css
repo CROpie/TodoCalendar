@@ -1,5 +1,5 @@
 :root {
-    --calendar-background: black;
+    --calendar-background: none;
     --BHS-height: 700px;
 }
 
@@ -20,13 +20,19 @@ body {
     padding-left: 2rem;
 }
 
+#BHS-container {
+    display: flex;
+}
+
 #calendar-container {
+    height: 100vh;
+
     margin: 0rem 1rem;
     border: 2px solid red;
     background-color: var(--calendar-background);
-    height: 100%;
+
     display: grid;
-    width: 80vw;
+    width: 90%;
     grid-template-columns: repeat(7, 14.28%);
     grid-template-rows: 50px repeat(6, 150px);
 }
@@ -39,8 +45,9 @@ body {
 
 .date,
 .day {
-    border: 1px solid black;
-    background-color: white;
+    color: white;
+    border: 1px solid white;
+    background-color: none;
     padding: 0.5rem;
 }
 
@@ -48,8 +55,12 @@ body {
     font-size: 2rem;
 }
 
+.date {
+    font-size: 1rem;
+}
+
 .date:hover {
-    background-color: blueviolet;
+    background-color: rgba(138, 43, 226, 0.7);
 }
 
 .date[data-date='blank'] {
@@ -57,8 +68,9 @@ body {
     border: none;
 }
 
-.todoC {
-    font-size: 1em;
+.calendar-todo {
+    font-size: 0.75rem;
+    color: black;
 
     border-radius: 1rem;
     background-color: lightgreen;
@@ -67,12 +79,8 @@ body {
     cursor: pointer;
 }
 
-.todoC:hover {
+.calendar-todo:hover {
     background-color: yellow;
-}
-
-#BHS-container {
-    display: flex;
 }
 
 .data-div {

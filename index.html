@@ -1,46 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
-    <title>Modular Todo</title>
-</head>
-<body>
-    <div id="full-container">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="styles.css" />
+        <link rel="stylesheet" href="calendarmerge.css" />
+        <script src="script.js" defer></script>
+        <title>Modular Todo</title>
+    </head>
+    <body>
+        <div id="full-container">
 
-        <div id="menu">
-            <div id="logoDiv">
-                <img class="bearImage" src="./Images/BearbeerCrop.png">
-                <div id="bearText">Opie the Beer Bear</div>
+            <div id="menu">
+                <div id="logoDiv">
+                    <img class="bearImage" src="./Images/BearbeerCrop.png" />
+                    <div id="bearText">Opie the Beer Bear</div>
+                </div>
+
+                <div id="view-option-container">
+                    <div id="list-view" class="view-option selected-view">List View</div>
+                    <div id="calendar-view" class="view-option">Calendar View
+                    </div>
+                </div>
+
+                <div id="date-container">
+                    <div class="date-item" data-date="all">All</div>
+                    <div class="date-item" data-date="week">7 days</div>
+                    <div class="date-item" data-date="day">Today</div>
+                    <div class="date-item" data-date="past">Past</div>
+                </div>
+
+                <div id="project-container">
+                    <!-- Data inserted here -->
+                </div>
+
+                <div id="new-project-container">
+                    <div id="new-project">New Project</div>
+                </div>
             </div>
 
-            <div id="date-container">
-                <div class="date-item" data-date="all">All</div>
-                <div class="date-item" data-date="week">7 days</div>
-                <div class="date-item" data-date="day">Today</div>
-                <div class="date-item" data-date="past">Past</div>
-            </div>
+            <div id="display">
+                <div id="header"></div>
+                <div id="todo-container">
+                    <div id="new-todo" class="todo">New Todo</div>
+                    <!-- Data inserted here -->
+                </div>
 
-            <div id="project-container">
-            <!-- Data inserted here -->
-            </div>
+                <div id="BHS-container">
+                    <div id="calendar-container"></div>
 
-            <div id="new-project-container">
-                <div id="new-project">New Project</div>
+                    <div id="data-container">
+
+                        <div class="data-div">
+                            <div class="data-heading">Name</div>
+                            <div id="data-name" class="data">&nbsp</div>
+                        </div>
+
+                        <div class="data-div">
+                            <div class="data-heading">Description</div>
+                            <div id="data-description" class="data">&nbsp</div>
+                        </div>
+
+                        <div class="data-div">
+                            <div class="data-heading">Notes</div>
+                            <div id="data-notes" class="data">&nbsp</div>
+                        </div>
+
+                    </div>
+                </div>
+                
             </div>
         </div>
-
-        <div id="display">
-            <div id="header"></div>
-            <div id="todo-container">
-                <div id="new-todo" class="todo">New Todo</div>
-                <!-- Data inserted here -->
-            </div>
-        </div>
-
-    </div>
-</body>
+    </body>
 </html>

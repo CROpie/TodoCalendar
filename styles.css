@@ -73,17 +73,19 @@ body {
     color: orange;
 }
 
-/* date */
+/* view, date */
 
-#date-container {
+#view-option-container {
     margin-top: -1rem;
 }
 
-.date-item {
+.date-item,
+.view-option {
     padding-left: 2rem;
 }
 
-.date-item:hover {
+.date-item:hover,
+.view-option:hover {
     background-color: blueviolet;
 }
 
@@ -195,11 +197,13 @@ body {
     color: white;
 }
 
-.todo:hover {
+.todo:hover,
+#new-todo:hover {
     background-color: rgba(138, 43, 226, 0.7);
 }
 
-.todo:active {
+.todo:active,
+#new-todo:active {
     background-color: rgba(211, 211, 211, 0.2);
 }
 
@@ -254,7 +258,8 @@ body {
 
 /* click date or project */
 .selected-date,
-.selected-project {
+.selected-project,
+.selected-view {
     color: orange;
 }
 
