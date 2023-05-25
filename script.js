@@ -81,9 +81,8 @@ const Menu = (() => {
         let uri = `http://localhost:3000/todos?username=${username}`;
         const res = await fetch(uri);
         todoList = await res.json();
-        Display.filterTodoList(todoList);
-        Calendar.filterTodoList(todoList);
-        // Display.renderTodos(todoList);
+        Display.filterTodoList(todoList, filterSettings);
+        Calendar.filterTodoList(todoList, filterSettings);
     }
 
     function highlightDateOnStartup() {
@@ -144,7 +143,7 @@ const Menu = (() => {
         filterSettings.dateIndex = event.target.dataset.date;
         highlightSelectedDate(event.target);
         storeFilterSettings();
-        Display.filterTodoList(todoList);
+        Display.filterTodoList(todoList, filterSettings);
     }
 
     function highlightSelectedDate(button) {
@@ -166,8 +165,12 @@ const Menu = (() => {
             if (!DOM.$projectInputField.textContent) {
                 DOM.$projectInputField.remove();
             } else {
-                // prettier-ignore
-                const newProjectIndex = projectList[projectList.length - 1].projectIndex + 1;
+                if (!projectList.length) {
+                    const newProjectIndex = 0;
+                } else {
+                    // prettier-ignore
+                    const newProjectIndex = projectList[projectList.length - 1].projectIndex + 1;
+                }
                 const newProject = {
                     username: username,
                     projectName: DOM.$projectInputField.textContent,
@@ -187,6 +190,10 @@ const Menu = (() => {
     }
 
     async function addProjectToDB(newProject) {
+        filterSettings.projectIndex = newProject.projectIndex;
+        const filterSettingsString = JSON.stringify(filterSettings);
+        window.localStorage.setItem('filterSettings', filterSettingsString);
+
         let uri = `http://localhost:3000/projects`;
         await fetch(uri, {
             method: 'POST',
@@ -199,7 +206,8 @@ const Menu = (() => {
         filterSettings.projectIndex = event.target.dataset.project;
         highlightSelectedProject(event.target);
         storeFilterSettings();
-        Display.filterTodoList(todoList);
+        Display.filterTodoList(todoList, filterSettings);
+        Calendar.filterTodoList(todoList, filterSettings);
     }
 
     function storeFilterSettings() {
@@ -239,6 +247,10 @@ const Menu = (() => {
         // need to sort to ensure that the largest todoIndex is in the last position in the array
         // prettier-ignore
         currentTodoList = currentTodoList.sort((a, b) => (a.todoIndex > b.todoIndex ? 1 : -1));
+
+        if (!currentTodoList.length) {
+            return 0;
+        }
 
         // prettier-ignore
         const newTodoIndex = currentTodoList[currentTodoList.length - 1].todoIndex + 1;
@@ -312,7 +324,10 @@ const Menu = (() => {
 })();
 
 const Display = (() => {
-    let filteredTodoList = [];
+    // displayTodoList is the result of filtering (filterTodoList) and improving the look of the date (renderTodos)
+    // the list initially comes from Menu.retrieveTodoList() which is called on initialization.
+    let displayTodoList = [];
+
     // viewSelection will toggle between 'list' and 'calendar'
     let viewSelection = 'list';
 
@@ -371,22 +386,29 @@ const Display = (() => {
         DOM.$BHSContainer.style.display = 'none';
     }
 
-    function filterTodoList(todoList) {
-        const filterSettings = Menu.getFilterSettings();
+    // todoList first comes from async Menu.retrieveTodoList() on initialization
+    // it is then sent when called by clickProjectButton or clickDateButton
+    function filterTodoList(fullTodoList, filterSettings) {
+        displayTodoList = fullTodoList;
 
         // first, filter by project
         if (filterSettings.projectIndex != -1) {
             // prettier-ignore
-            todoList = todoList.filter((todo) => todo.projectIndex == filterSettings.projectIndex);
+            displayTodoList = displayTodoList.filter((todo) => todo.projectIndex == filterSettings.projectIndex);
         }
+
         // then filter by date
-        todoList = filterByDate(todoList, filterSettings.dateIndex);
-        renderTodos(todoList);
+        // prettier-ignore
+        displayTodoList = filterByDate(displayTodoList, filterSettings.dateIndex);
+
+        renderTodos(displayTodoList);
     }
 
-    function renderTodos(todoList) {
-        filteredTodoList = todoList;
-
+    // renderTodos is called by filterTodoList, which occurs either 1) right after the data has been retrieved from the database
+    // or 2) when a different filter setting (project / date) has been chosen.
+    // In each of these cases, the todos (a reference thereof?) are sent from Menu.
+    // resetNewTodo and resetEditTodo also call renderTodos, using the latest stored version (which is kept as a variable in Display).
+    function renderTodos(displayTodoList) {
         DOM.$todoContainer.replaceChildren('');
 
         // set up the "New Todo" button
@@ -394,19 +416,19 @@ const Display = (() => {
         DOM.$todoContainer.insertAdjacentHTML('beforeend', template);
         bindClickNewTodo();
 
-        if (todoList.length === 0) {
+        if (displayTodoList.length === 0) {
             return;
         }
 
-        todoList = sortByDate(todoList);
+        displayTodoList = sortByDate(displayTodoList);
         // flag certain due-days for color-coding and special text
-        todoList = flagDateColorCoding(todoList);
+        displayTodoList = flagDateColorCoding(displayTodoList);
 
         // change dates to be in " Aug 16 '23 " format
-        todoList = alterDateToBePretty(todoList);
+        displayTodoList = alterDateToBePretty(displayTodoList);
 
         // create and HTML and render it
-        todoList.forEach((todo) => {
+        displayTodoList.forEach((todo) => {
             if (todo.dateFlag) {
                 template = createTodoElementWithDateFlag(todo);
             } else {
@@ -569,7 +591,7 @@ const Display = (() => {
 
         // this command doesn't work after resetNewTodo() because a new instance of the button is created?
         // const currentButton = event.target;
-        //prettier-ignore
+        // prettier-ignore
         const currentButton = document.querySelector(`[data-todo="${todoIndex}"][data-project="${projectIndex}"]`)
         const currentTodo = Menu.getTodoData(projectIndex, todoIndex);
 
@@ -580,7 +602,7 @@ const Display = (() => {
         if (!document.querySelector('.input-new-container')) {
             return;
         } else {
-            renderTodos(filteredTodoList);
+            renderTodos(displayTodoList);
         }
     }
 
@@ -588,7 +610,7 @@ const Display = (() => {
         if (!document.querySelector('.todo-edit-field')) {
             return;
         } else {
-            renderTodos(filteredTodoList);
+            renderTodos(displayTodoList);
         }
     }
 
@@ -653,6 +675,9 @@ const Display = (() => {
         populateProjectDropdown();
         bindSubmitNewTodo();
         bindDateSelectRemoveBorder();
+
+        // need to do this to allow clicking on the input field
+        document.querySelector('.todo-name').style.pointerEvents = 'auto';
     }
 
     function createTodoInputNameFields() {
@@ -792,10 +817,11 @@ const Display = (() => {
 
     function allowEditingOfTitleInfo(currentDuedate) {
         const currentTodo = DOM.$editingTodo;
-        currentTodo.classList.add('hide-hover');
+        currentTodo.classList.add('current-edit-header');
 
         currentTodo.children[0].classList.add('todo-edit-field');
         currentTodo.children[0].setAttribute('contenteditable', 'true');
+        currentTodo.children[0].style.pointerEvents = 'auto';
         currentTodo.children[1].textContent = '';
         currentTodo.children[2].remove();
         const dateField = createDateInputField();
@@ -827,7 +853,7 @@ const Display = (() => {
     }
 
     function collectEditedData(event) {
-        // need to get the other data from the todo? or will PUT just change the altered fields?
+        // need to get the other data from the todo? or will PUT just change the altered fields? X need to insert all the data into the object
         const selectedProjectIndex = event.target.dataset.project;
         const selectedTodoIndex = event.target.dataset.todo;
         // prettier-ignore
@@ -883,7 +909,7 @@ const Display = (() => {
         if (viewSelection === 'calendar') {
             DOM.$BHSContainer.style.display = 'none';
             DOM.$todoContainer.style.display = 'flex';
-            DOM.$;
+            window.localStorage.setItem('view', 'list');
             viewSelection = 'list';
         } else {
             console.log('nothing happened.');
@@ -895,8 +921,18 @@ const Display = (() => {
             DOM.$BHSContainer.style.display = 'flex';
             DOM.$todoContainer.style.display = 'none';
             viewSelection = 'calendar';
+            window.localStorage.setItem('view', 'calendar');
         } else {
             console.log('nothing happened.');
+        }
+    }
+
+    function setDisplayOnLoad() {
+        const view = window.localStorage.getItem('view');
+        if (view === 'list') {
+            displayTodos();
+        } else {
+            displayCalendar();
         }
     }
 
@@ -907,6 +943,7 @@ const Display = (() => {
         autoOpenTodoAfterEdit,
         displayTodos,
         displayCalendar,
+        setDisplayOnLoad,
     };
 })();
 
@@ -919,29 +956,32 @@ const Calendar = (() => {
         year: undefined,
     };
 
-    let todoList = [];
-    let currentMonthTodos = [];
+    let chosenDate = undefined;
+    let chosenMonth = undefined;
+    let chosenYear = undefined;
 
     const DOM = {
         $display: document.querySelector('#display'),
         $calendarContainer: document.querySelector('#calendar-container'),
 
+        $previousMonth: undefined,
+        $nextMonth: undefined,
+
         $todoNodeList: undefined,
         $dataName: document.querySelector('#data-name'),
         $dataDescription: document.querySelector('#data-description'),
         $dataNotes: document.querySelector('#data-notes'),
+        $dataProjectDropdown: document.querySelector('#data-project-dropdown'),
+        $submitTodo: document.querySelector('#submit-calendar-todo'),
     };
 
     function init() {
         getDateInfo();
-        renderGrid();
-        bindClickDate();
-
-        //printTodoToCalendar();
     }
 
     function bindClickDate() {
-        DOM.$calendarContainer.addEventListener('click', clickDate);
+        // prettier-ignore
+        DOM.$calendarContainer.addEventListener('click', clickDate, {capture: true,});
     }
 
     function bindClickTodo() {
@@ -951,19 +991,78 @@ const Calendar = (() => {
         });
     }
 
-    function filterTodoList(sentTodoList) {
-        const filterSettings = Menu.getFilterSettings();
-        todoList = sentTodoList;
+    function bindClickPrevMonth() {
+        DOM.$previousMonth = document.querySelector('#prev-month-button');
+        DOM.$previousMonth.addEventListener('click', clickPrevMonth);
+    }
+
+    function bindClickNextMonth() {
+        DOM.$nextMonth = document.querySelector('#next-month-button');
+        DOM.$nextMonth.addEventListener('click', clickNextMonth);
+    }
+
+    function bindSubmitTodo() {
+        DOM.$submitTodo.addEventListener('click', getNewTodoData);
+    }
+
+    function unbindSubmitTodo() {
+        DOM.$submitTodo.removeEventListener('click', getNewTodoData);
+    }
+
+    // called by async Menu.retrieveTodoList on initialization
+    // in the first run though, the month will be the current month ( dateInfo.month )
+    // when this function is called by changing the month, it will use a different value, but everything else is the same.
+    function filterTodoList(fullTodoList, filterSettings) {
+        calendarTodoList = fullTodoList;
         // first, filter by project
         if (filterSettings.projectIndex != -1) {
             // prettier-ignore
-            todoList = todoList.filter((todo) => todo.projectIndex == filterSettings.projectIndex);
+            calendarTodoList = calendarTodoList.filter((todo) => todo.projectIndex == filterSettings.projectIndex);
         }
-        // then filter by the (selected) month
-        // (currently filters by the current month)
-        // prettier-ignore
-        currentMonthTodos = todoList.filter((todo) => todo.duedate.slice(5,7) == dateInfo.month)
-        printTodoToCalendar();
+
+        // chosenMonth is initialized as the current month, then modified by clickPrevMonth() and clickNextMonth()
+        // due date is YYYY-MM-DD
+        currentMonthTodos = calendarTodoList
+            .filter((todo) => todo.duedate.slice(5, 7) == chosenMonth)
+            .filter((todo) => todo.duedate.slice(0, 4) == chosenYear);
+
+        renderCalendar();
+        renderCalendarTodos(currentMonthTodos);
+
+        Display.setDisplayOnLoad();
+    }
+
+    function clickPrevMonth() {
+        chosenMonth -= 1;
+        if (chosenMonth === 0) {
+            chosenMonth = 12;
+            chosenYear -= 1;
+        }
+        const fullTodoList = Menu.getTodoList();
+        const filterSettings = Menu.getFilterSettings();
+        filterTodoList(fullTodoList, filterSettings);
+        removeDataInputFields();
+    }
+
+    function clickNextMonth() {
+        chosenMonth += 1;
+        if (chosenMonth === 13) {
+            chosenMonth = 1;
+            chosenYear += 1;
+        }
+        const fullTodoList = Menu.getTodoList();
+        const filterSettings = Menu.getFilterSettings();
+        filterTodoList(fullTodoList, filterSettings);
+        removeDataInputFields();
+    }
+
+    function renderCalendar() {
+        DOM.$calendarContainer.replaceChildren('');
+        renderCalendarButtons();
+        renderNameOfDay();
+        renderBlanks();
+        renderDate();
+        bindClickDate();
     }
 
     function getDateInfo() {
@@ -975,17 +1074,30 @@ const Calendar = (() => {
         // dateInfo.month = 1;
         dateInfo.year = todayDate.getFullYear();
 
-        console.log(dateInfo);
+        chosenMonth = dateInfo.month;
+        chosenYear = dateInfo.year;
     }
 
-    function renderGrid() {
-        renderNameOfDay();
-        renderBlanks();
-        renderDate();
+    function renderCalendarButtons() {
+        const calendarButtons = makeCalendarButtons();
+        DOM.$calendarContainer.insertAdjacentHTML('beforeend', calendarButtons);
+        bindClickPrevMonth();
+        bindClickNextMonth();
+    }
+
+    function makeCalendarButtons() {
+        // prettier-ignore
+        const monthList = ['Blank', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        let template = '';
+        template += `<div id="month-menu-container">
+                        <button class="menu-button" id="prev-month-button">⬅</button>
+                        <div id="month-menu-month">${monthList[chosenMonth]} ${chosenYear}</div>
+                        <button class="menu-button" id="next-month-button">➡</button>
+                    </div>`;
+        return template;
     }
 
     function renderNameOfDay() {
-        console.log(DOM.$calendarContainer);
         // prettier-ignore
         const dayArray = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         for (let i = 0; i < 7; i++) {
@@ -1023,7 +1135,7 @@ const Calendar = (() => {
     }
 
     function getInitialDayOfWeek() {
-        const initialDay = new Date(`${dateInfo.month} 01 ${dateInfo.year}`);
+        const initialDay = new Date(`${chosenMonth} 01 ${chosenYear}`);
         const initialDayOfWeek = initialDay.getDay();
         return initialDayOfWeek;
     }
@@ -1031,7 +1143,11 @@ const Calendar = (() => {
     function makeGridDate(num) {
         const data = num.toString().padStart(2, '0');
         let template = '';
-        template += `<div class='date' data-date=${data}>${num}</div>`;
+        if (data == dateInfo.day) {
+            template += `<div class='date today-highlight' data-date=${data}>${num}</div>`;
+        } else {
+            template += `<div class='date' data-date=${data}>${num}</div>`;
+        }
         return template;
     }
 
@@ -1046,9 +1162,8 @@ const Calendar = (() => {
     function getDaysInCurrentMonth() {
         // prettier-ignore
         const daysInMonthNonLeapArray = ['0', '31', '28', '31', '30', '31', '30', '31', '31', '30', '31', '30', '31']
-        const daysInCurrentMonth = parseInt(
-            daysInMonthNonLeapArray[dateInfo.month]
-        );
+        // prettier-ignore
+        const daysInCurrentMonth = parseInt(daysInMonthNonLeapArray[chosenMonth]);
         return daysInCurrentMonth;
     }
 
@@ -1056,29 +1171,7 @@ const Calendar = (() => {
         return dateInfo;
     }
 
-    // want to 'reset' the data panel. Need to check for non-todo event.target somehow
-    function clickDate(event) {
-        const clickedDataDate = event.target.dataset.date;
-        const clickedDate = event.target;
-        /*
-        DOM.$dataName.textContent = '';
-        DOM.$dataDescription.textContent = '';
-        DOM.$dataNotes.textContent = '';
-        */
-    }
-
-    // incorporated it into filterTodoList
-    function filterForCurrentMonth() {
-        // dont need this if == used instead of ===
-        // const currentMonth = dateInfo.month.toString().padStart(2, '0');
-        console.log(dateInfo.month);
-        // prettier-ignore
-        currentMonthTodos = todoList.filter((todo) => todo.duedate.slice(5,7) == dateInfo.month)
-
-        return currentMonthTodos;
-    }
-
-    function printTodoToCalendar() {
+    function renderCalendarTodos(currentMonthTodos) {
         currentMonthTodos.forEach((todo) => {
             const todoDate = todo.duedate.slice(8, 10);
             // prettier-ignore
@@ -1097,29 +1190,160 @@ const Calendar = (() => {
             snippet = todo.name;
         }
         let template = '';
-        template += `<div class='calendar-todo' data-todo=${todo.todoIndex} data-project=${todo.projectIndex}>${snippet}</div>`;
+        template += `<div class='calendar-todo projectColour${todo.projectIndex}' data-todo=${todo.todoIndex} data-project=${todo.projectIndex}>${snippet}</div>`;
         return template;
     }
 
     function clickTodo(event) {
+        removeDataInputFields();
+
         const projectIndex = event.target.dataset.project;
         const todoIndex = event.target.dataset.todo;
         const currentTodo = findTodo(projectIndex, todoIndex);
-        console.log('current todo: ', currentTodo);
+
         DOM.$dataName.textContent = currentTodo.name;
         DOM.$dataDescription.textContent = currentTodo.desc;
         DOM.$dataNotes.textContent = currentTodo.notes;
     }
 
     function findTodo(projectIndex, todoIndex) {
-        console.log(todoList);
-        const filteredTodoList = todoList.filter(
-            (todo) => todo.projectIndex == projectIndex
-        );
-        const currentTodo = filteredTodoList.find(
-            (todo) => todo.todoIndex == todoIndex
-        );
+        const todoList = Menu.getTodoList();
+
+        const currentTodo = todoList
+            .filter((todo) => todo.projectIndex == projectIndex)
+            .find((todo) => todo.todoIndex == todoIndex);
+
         return currentTodo;
+    }
+
+    // want to 'reset' the data panel. Need to check for non-todo event.target somehow
+    function clickDate(event) {
+        const clickedDataDate = event.target.dataset.date;
+
+        if (!clickedDataDate) {
+            return;
+        }
+
+        chosenDate = clickedDataDate;
+
+        DOM.$dataName.textContent = '';
+        DOM.$dataDescription.textContent = '';
+        DOM.$dataNotes.textContent = '';
+
+        setupAddNewTodo();
+        bindSubmitTodo();
+    }
+
+    function setupAddNewTodo() {
+        DOM.$dataName.setAttribute('contentEditable', 'true');
+        DOM.$dataName.classList.add('data-input-field');
+        DOM.$dataName.focus();
+
+        DOM.$dataDescription.setAttribute('contentEditable', 'true');
+        DOM.$dataDescription.classList.add('data-input-field');
+
+        DOM.$dataNotes.setAttribute('contentEditable', 'true');
+        DOM.$dataNotes.classList.add('data-input-field');
+
+        DOM.$dataProjectDropdown.style.display = 'block';
+        DOM.$dataProjectDropdown.replaceChildren('');
+        populateProjectDropdown();
+
+        DOM.$submitTodo.style.display = 'block';
+    }
+
+    function removeDataInputFields() {
+        DOM.$dataName.setAttribute('contentEditable', 'false');
+        DOM.$dataName.classList.remove('data-input-field');
+        DOM.$dataDescription.setAttribute('contentEditable', 'false');
+        DOM.$dataDescription.classList.remove('data-input-field');
+        DOM.$dataNotes.setAttribute('contentEditable', 'false');
+        DOM.$dataNotes.classList.remove('data-input-field');
+
+        DOM.$dataProjectDropdown.style.display = 'none';
+
+        DOM.$submitTodo.style.display = 'none';
+
+        unbindSubmitTodo();
+    }
+
+    function populateProjectDropdown() {
+        const blankOption = createBlankOption();
+        DOM.$dataProjectDropdown.insertAdjacentHTML('beforeend', blankOption);
+
+        const projectList = Menu.getProjectList();
+
+        projectList.forEach((project) => {
+            const projectOption = createProjectOption(project);
+            DOM.$dataProjectDropdown.insertAdjacentHTML(
+                'beforeend',
+                projectOption
+            );
+        });
+
+        DOM.$dataProjectDropdown.children[0].selected = true;
+        DOM.$dataProjectDropdown.children[0].value = '';
+        DOM.$dataProjectDropdown.children[0].disabled = true;
+        console.log(DOM.$dataProjectDropdown.children);
+
+        // Auto-select the current project (if not All)
+        // only works when projectIndexes are in order from 1 ...
+        const projectIndex = Menu.getFilterSettings().projectIndex;
+        if (projectIndex > -1) {
+            DOM.$dataProjectDropdown.selectedIndex = parseInt(projectIndex) + 1;
+        }
+    }
+
+    function createBlankOption() {
+        let template = '';
+        template += `<option class="dropdown-option" value="disabled">Choose project: </option>`;
+
+        return template;
+    }
+
+    function createProjectOption(project) {
+        let template = '';
+        template += `<option class="dropdown-option" value="${project.projectIndex}">${project.projectName}</option>`;
+
+        return template;
+    }
+
+    function getNewTodoData() {
+        const projectIndex = DOM.$dataProjectDropdown.selectedIndex - 1;
+        const newTodoIndex = Menu.getNewTodoIndex(projectIndex);
+
+        const twoDigitMonth = chosenMonth.toString().padStart(2, '0');
+
+        const chosenDateString = `${chosenYear}-${twoDigitMonth}-${chosenDate}`;
+
+        const newTodo = {
+            username: Menu.getUsername(),
+            projectIndex: projectIndex,
+            name: DOM.$dataName.textContent,
+            duedate: chosenDateString,
+            desc: DOM.$dataDescription.textContent,
+            notes: DOM.$dataNotes.textContent,
+            todoIndex: newTodoIndex,
+        };
+
+        console.log(newTodo);
+
+        // addTodoToDB(newTodo);
+    }
+
+    async function addTodoToDB(newTodo) {
+        const filterSettingsString = JSON.stringify(Menu.getFilterSettings());
+        window.localStorage.setItem('filterSettings', filterSettingsString);
+        /*
+        window.localStorage.setItem('autoOpenFlag', true);
+        window.localStorage.setItem('autoOpenTodo', JSON.stringify(newTodo));
+*/
+        let uri = `http://localhost:3000/todos`;
+        await fetch(uri, {
+            method: 'POST',
+            body: JSON.stringify(newTodo),
+            headers: { 'Content-Type': 'application/json' },
+        });
     }
 
     init();

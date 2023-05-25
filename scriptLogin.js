@@ -3,10 +3,6 @@ const LogInScreen = (() => {
 
     const DOM = {
         $usernameInput: document.querySelector('.modal-input-field'),
-        // $specialOptionsButton: document.querySelector('#open-tools'),
-        // $specialOptionsContainer: document.querySelector('.modal-buttons-container'),
-        // $deleteDataButton: document.querySelector('#delete-data-button'),
-        // $generateDataButton: document.querySelector('#generate-data-button'),
     };
 
     function init() {
@@ -17,9 +13,6 @@ const LogInScreen = (() => {
 
     function bindings() {
         DOM.$usernameInput.addEventListener('keypress', enterUsername);
-        // DOM.$specialOptionsButton.addEventListener('click', toggleSpecialTools);
-        // DOM.$deleteDataButton.addEventListener('click', clickDeleteData);
-        // DOM.$generateDataButton.addEventListener('click', clickGenerateData);
     }
 
     function enterUsername(event) {
@@ -62,11 +55,7 @@ const LogInScreen = (() => {
         await addProjectListToDB(userName);
         await addTodoListToDB(userName);
 
-        //prettier-ignore
-
-        window.localStorage.setItem("filterSettings", '{"projectIndex":-1,"dateIndex":"all"}')
-        window.localStorage.setItem('userName', userName);
-        window.localStorage.setItem('editFlag', false);
+        setLocalStorage(userName);
         window.location.href = 'index.html';
     }
 
@@ -74,11 +63,17 @@ const LogInScreen = (() => {
         if (!usersList.includes(userName)) {
             addUsernameToDB(userName);
         }
+
+        setLocalStorage(userName);
+        window.location.href = 'index.html';
+    }
+
+    function setLocalStorage(userName) {
         //prettier-ignore
         window.localStorage.setItem("filterSettings", '{"projectIndex":-1,"dateIndex":"all"}')
         window.localStorage.setItem('userName', userName);
         window.localStorage.setItem('editFlag', false);
-        window.location.href = 'index.html';
+        window.localStorage.setItem('view', 'list');
     }
 
     async function retrieveUsernameList() {

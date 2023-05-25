@@ -210,7 +210,6 @@ body {
 .todo-name {
     flex: 1;
     pointer-events: none;
-    z-index: 12;
 }
 
 .todo-date {
@@ -333,8 +332,14 @@ body {
 
 /* click edit button */
 
-.hide-hover:active {
+/* prevent the todo from flashing when clicking it during editing */
+.current-edit-header:active {
     background-color: rgba(138, 43, 226, 0.7);
+}
+
+/* need to add important to cancel the effect of #new-todo */
+.input-new-container {
+    background-color: rgba(138, 43, 226, 0.7) !important;
 }
 
 #date-input-field {
