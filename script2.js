@@ -38,6 +38,7 @@ const DATABASE = (() => {
         console.log('DATABASE initializing');
         await getProjectsFromDB();
         await getTodosFromDB();
+        getFilterSettingsFromLocalStorage();
         filterTodoList();
     }
 
@@ -53,6 +54,17 @@ const DATABASE = (() => {
         let uri = `http://localhost:3000/todos?username=${username}`;
         const res = await fetch(uri);
         userTodoList = await res.json();
+    }
+
+    function getFilterSettingsFromLocalStorage() {
+        const filterSettingsString =
+            window.localStorage.getItem('filterSettings');
+        if (!filterSettingsString) {
+            console.log('using default filter settings');
+            return;
+        } else {
+            filterSettings = JSON.parse(filterSettingsString);
+        }
     }
 
     function filterTodoList() {
@@ -144,6 +156,8 @@ const DATABASE = (() => {
             body: JSON.stringify(newProject),
             headers: { 'Content-Type': 'application/json' },
         });
+        filterSettings.projectIndex = newProject.projectIndex;
+        setLocalStorageFilterSettings();
     }
 
     function getNewTodoIndex(projectIndex) {
@@ -165,20 +179,15 @@ const DATABASE = (() => {
     }
 
     async function addNewTodoToDB(newTodo) {
-        /*
-        const filterSettingsString = JSON.stringify(Menu.getFilterSettings());
-        window.localStorage.setItem('filterSettings', filterSettingsString);
-
-        window.localStorage.setItem('autoOpenFlag', true);
-        window.localStorage.setItem('autoOpenTodo', JSON.stringify(newTodo));
-        */
-
         let uri = `http://localhost:3000/todos`;
         await fetch(uri, {
             method: 'POST',
             body: JSON.stringify(newTodo),
             headers: { 'Content-Type': 'application/json' },
         });
+
+        window.localStorage.setItem('autoOpenFlag', true);
+        window.localStorage.setItem('autoOpenTodo', JSON.stringify(newTodo));
     }
 
     async function deleteTodoFromDB(todoDBID) {
@@ -187,28 +196,61 @@ const DATABASE = (() => {
     }
 
     async function saveEditedTodoToDB(editedTodo, todoDBID) {
-        //const filterSettingsString = JSON.stringify(Menu.getFilterSettings());
-        //window.localStorage.setItem('filterSettings', filterSettingsString);
-
-        //window.localStorage.setItem('autoOpenFlag', true);
-        //window.localStorage.setItem('autoOpenTodo', JSON.stringify(editedTodo));
-
         let uri = `http://localhost:3000/todos/${todoDBID}`;
         await fetch(uri, {
             method: 'PUT',
             body: JSON.stringify(editedTodo),
             headers: { 'Content-Type': 'application/json' },
         });
+
+        window.localStorage.setItem('autoOpenFlag', true);
+        window.localStorage.setItem('autoOpenTodo', JSON.stringify(editedTodo));
     }
 
     function changeProjectFilterSetting(projectFilterSetting) {
         filterSettings.projectIndex = projectFilterSetting;
+        setLocalStorageFilterSettings();
         filterTodoList();
     }
 
     function changeDateFilterSetting(dateFilterSetting) {
         filterSettings.dateIndex = dateFilterSetting;
+        setLocalStorageFilterSettings();
         filterTodoList();
+    }
+
+    function setLocalStorageFilterSettings() {
+        const filterSettingsString = JSON.stringify(filterSettings);
+        window.localStorage.setItem('filterSettings', filterSettingsString);
+    }
+
+    function getFilterSettings() {
+        return filterSettings;
+    }
+
+    // need to find the DB id of all todos relevant to a particular project, because when it gets deleted, they should be removed as well.
+    function getAssociatedTodoDBIDs(projectIndex) {
+        // prettier-ignore
+        const associatedTodoDBIDs = userTodoList
+        .filter((todo) => todo.projectIndex == projectIndex)
+        .map((todo) => todo.id);
+
+        return associatedTodoDBIDs;
+    }
+
+    async function deleteProjectFromDB(projectDBID) {
+        let uri = `http://localhost:3000/projects/${projectDBID}`;
+        await fetch(uri, { method: 'DELETE' });
+        filterSettings.projectIndex = -1;
+        setLocalStorageFilterSettings();
+        return true;
+    }
+
+    async function deleteAssociatedTodosFromDB(associatedTodoDBIDs) {
+        for (todoID of associatedTodoDBIDs) {
+            let uri = `http://localhost:3000/todos/${todoID}`;
+            await fetch(uri, { method: 'DELETE' });
+        }
     }
 
     return {
@@ -222,6 +264,10 @@ const DATABASE = (() => {
         saveEditedTodoToDB,
         changeProjectFilterSetting,
         changeDateFilterSetting,
+        getFilterSettings,
+        getAssociatedTodoDBIDs,
+        deleteProjectFromDB,
+        deleteAssociatedTodosFromDB,
     };
 })();
 
@@ -306,6 +352,7 @@ const DATES = (() => {
 
         renderDateBtns();
         bindDateBtns();
+        setSelectedDate();
     }
 
     function renderDateBtns() {
@@ -331,18 +378,27 @@ const DATES = (() => {
         })
     }
 
-    function clickDateBtn(event) {
-        dateFilterSetting = event.target.dataset.date;
-        selectDate(event.target);
-        //storeFilterSettings();
-        DATABASE.changeDateFilterSetting(dateFilterSetting);
-        TODOS.init();
+    // get filtersettings from localstorage to recall & choose the selected date after a refresh (database entry, refresh button)
+    function setSelectedDate() {
+        const filterSettings = DATABASE.getFilterSettings();
+        const filterDateIndex = filterSettings.dateIndex;
+        // prettier-ignore
+        const selectedButton = document.querySelector(`[data-date="${filterDateIndex}"]`);
+        selectDate(selectedButton);
     }
 
     function selectDate(button) {
         // prettier-ignore
         document.querySelector('.selected-date').classList.remove('selected-date');
         button.classList.add('selected-date');
+    }
+
+    function clickDateBtn(event) {
+        dateFilterSetting = event.target.dataset.date;
+        selectDate(event.target);
+        //storeFilterSettings();
+        DATABASE.changeDateFilterSetting(dateFilterSetting);
+        TODOS.init();
     }
 
     return { init };
@@ -355,6 +411,7 @@ const PROJECTS = (() => {
         projectContainer: undefined,
 
         projectBtnNodeList: undefined,
+        projectDelBtnNodeList: undefined,
     };
 
     // retrieve and set up the project fitler buttons
@@ -365,6 +422,8 @@ const PROJECTS = (() => {
 
         renderProjects();
         bindProjectBtns();
+        bindProjectDelBtns();
+        setSelectedProject();
     }
 
     function renderProjects() {
@@ -402,6 +461,29 @@ const PROJECTS = (() => {
         });
     }
 
+    function bindProjectDelBtns() {
+        DOM.projectDelBtnNodeList =
+            document.querySelectorAll('.proj-del-button');
+        DOM.projectDelBtnNodeList.forEach((button) => {
+            button.addEventListener('click', clickProjectDelBtn);
+        });
+    }
+
+    // get filtersettings from localstorage to recall & choose the selected project after a refresh (database entry, refresh button)
+    function setSelectedProject() {
+        const filterSettings = DATABASE.getFilterSettings();
+        const filterProjectIndex = filterSettings.projectIndex;
+        // prettier-ignore
+        const selectedButton = document.querySelector(`[data-project="${filterProjectIndex}"]`);
+        selectProject(selectedButton);
+    }
+
+    function selectProject(button) {
+        // prettier-ignore
+        document.querySelector('.selected-project').classList.remove('selected-project');
+        button.classList.add('selected-project');
+    }
+
     // result of clicking a project button
     function clickProjectBtn(event) {
         projectFilterSetting = event.target.dataset.project;
@@ -412,10 +494,33 @@ const PROJECTS = (() => {
         TODOS.init();
     }
 
-    function selectProject(button) {
+    // result of clicking a delete todo button
+    async function clickProjectDelBtn(event) {
+        const projectIndex = event.target.dataset.project;
+        console.log(projectIndex);
+
+        // find projectID of the project to remove
+        const projectDBID = getClickedProjectDBID(projectIndex);
+
+        // find the todo.id of all todos with the corresponding projectIndex
+        const associatedTodoDBIDs =
+            DATABASE.getAssociatedTodoDBIDs(projectIndex);
+
+        console.log(projectDBID, associatedTodoDBIDs);
+
+        // await deleting the project using projectid
+        const deleteSuccess = await DATABASE.deleteProjectFromDB(projectDBID);
+
+        // delete the associated todos using todoid
+        if (deleteSuccess) {
+            DATABASE.deleteAssociatedTodosFromDB(associatedTodoDBIDs);
+        }
+    }
+
+    function getClickedProjectDBID(projectIndex) {
         // prettier-ignore
-        document.querySelector('.selected-project').classList.remove('selected-project');
-        button.classList.add('selected-project');
+        const clickedProjectData = userProjectList.find((project) => project.projectIndex == projectIndex);
+        return clickedProjectData.id;
     }
 
     return { init, DOM };
@@ -717,6 +822,7 @@ const TODOS = (() => {
         renderTodos();
         bindTodoBtns();
         bindTodoDelBtns();
+        autoOpenTodoAfterDBEntry();
     }
 
     // ** runs a variety of functions that modify the todoList retrieved from the database, giving cleaner dates & colour-coding **
@@ -928,6 +1034,21 @@ const TODOS = (() => {
                         </div>
                     </div>`;
         return template;
+    }
+
+    function autoOpenTodoAfterDBEntry() {
+        // check to see if a todo has just been added or edited via localstorage ('true' or 'false')
+        const autoOpenFlag = window.localStorage.getItem('autoOpenFlag');
+        if (autoOpenFlag == 'true') {
+            // prettier-ignore
+            const autoOpenTodo = JSON.parse(window.localStorage.getItem('autoOpenTodo'));
+
+            const currentTodo = document.querySelector(
+                `[data-todo="${autoOpenTodo.todoIndex}"][data-project="${autoOpenTodo.projectIndex}"]`
+            );
+            renderTodoData(currentTodo, autoOpenTodo);
+        }
+        window.localStorage.setItem('autoOpenFlag', false);
     }
 
     // result of clicking a delete todo button

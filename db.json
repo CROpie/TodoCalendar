@@ -30,15 +30,9 @@
     },
     {
       "username": "default",
-      "projectName": "Another",
+      "projectName": "Project3",
       "projectIndex": 2,
       "id": 4
-    },
-    {
-      "username": "default",
-      "projectName": "Lets try again",
-      "projectIndex": 3,
-      "id": 5
     }
   ],
   "todos": [
@@ -54,7 +48,7 @@
       "projectIndex": 1,
       "name": "Mitsunobu reaction",
       "duedate": "2023-05-26",
-      "desc": "Book 7 page 47",
+      "desc": "Book 7 page 47 47",
       "notes": "Didn't run under nitrogen last time and it was still fine. Repeat reaction to make more starting material",
       "todoIndex": 0,
       "id": 8
@@ -113,11 +107,31 @@
       "username": "default",
       "projectIndex": 0,
       "name": "Fume Hood Maintenance",
+      "duedate": "2023-05-26",
       "desc": "Scheduled maintenance",
-      "duedate": "2023-05-27",
       "notes": "Won't be able to use the fume hood on this day",
       "todoIndex": 4,
       "id": 17
+    },
+    {
+      "username": "default",
+      "projectIndex": 1,
+      "name": "After Add what hapens?",
+      "duedate": "2023-05-26",
+      "desc": "2",
+      "notes": "3",
+      "todoIndex": 3,
+      "id": 18
+    },
+    {
+      "username": "default",
+      "projectIndex": 2,
+      "name": "Working?",
+      "duedate": "2023-05-27",
+      "desc": "Or",
+      "notes": "Not ?",
+      "todoIndex": 0,
+      "id": 19
     }
   ]
 }
