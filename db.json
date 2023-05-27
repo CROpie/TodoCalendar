@@ -21,117 +21,108 @@
       "projectName": "Catalysis",
       "projectIndex": 1,
       "id": 2
-    },
-    {
-      "username": "something",
-      "projectName": "Another",
-      "projectIndex": 2,
-      "id": 3
-    },
-    {
-      "username": "default",
-      "projectName": "Project3",
-      "projectIndex": 2,
-      "id": 4
     }
   ],
   "todos": [
     {
-      "name": "Sonogashira coupling",
-      "duedate": "2023-05-18",
-      "desc": "Book 7 page 11",
-      "notes": "Sonog rules",
-      "id": 7
-    },
-    {
       "username": "default",
       "projectIndex": 1,
       "name": "Mitsunobu reaction",
+      "desc": "Book 7 page 12",
       "duedate": "2023-05-26",
-      "desc": "Book 7 page 47 47",
       "notes": "Didn't run under nitrogen last time and it was still fine. Repeat reaction to make more starting material",
       "todoIndex": 0,
-      "id": 8
+      "id": 1
     },
     {
       "username": "default",
       "projectIndex": 0,
       "name": "Waste Disposal",
       "desc": "By 10:00 at the latest",
-      "duedate": "2023-05-23",
+      "duedate": "2023-05-27",
       "notes": "Take down the TLC plates too",
       "todoIndex": 0,
-      "id": 9
+      "id": 2
+    },
+    {
+      "username": "default",
+      "projectIndex": 1,
+      "name": "Wash glassware",
+      "desc": "Do the syringe needles top",
+      "duedate": "2023-05-28",
+      "notes": "Make sure to put in the oven in preparation for tomorrow's reaction",
+      "todoIndex": 1,
+      "id": 3
     },
     {
       "username": "default",
       "projectIndex": 0,
       "name": "Waste Solvent Disposal",
       "desc": "10:00 at the lobby",
-      "duedate": "2023-05-25",
+      "duedate": "2023-05-29",
       "notes": "Make sure to bring back some empty carboys (if available)",
       "todoIndex": 1,
-      "id": 11
+      "id": 4
     },
     {
       "username": "default",
       "projectIndex": 1,
       "name": "BCl3/AlCl3 reaction",
       "desc": "Book 7 page 10",
-      "duedate": "2023-06-07",
+      "duedate": "2023-06-11",
       "notes": "Enough material for a 1g scale reaction",
       "todoIndex": 2,
-      "id": 12
+      "id": 5
     },
     {
       "username": "default",
       "projectIndex": 0,
       "name": "Liquid Nitrogen",
       "desc": "Take it from floor 3 when it arrives",
-      "duedate": "2023-05-23",
+      "duedate": "2023-05-27",
       "notes": "Asada has been doing freeze-pump-thaw cycles recently, so need to fill it to the brim",
       "todoIndex": 2,
-      "id": 13
+      "id": 6
+    },
+    {
+      "username": "default",
+      "projectIndex": 1,
+      "name": "Sonogashira coupling",
+      "desc": "Book 7 page 11",
+      "duedate": "2023-05-27",
+      "notes": "Use the fresh alkyne when it arrives",
+      "todoIndex": 3,
+      "id": 7
     },
     {
       "username": "default",
       "projectIndex": 0,
       "name": "Dry Ice",
       "desc": "Move it to the storage container",
-      "duedate": "2023-05-24",
+      "duedate": "2023-05-28",
       "notes": "Be sure to dispose of the plastic inside the container before filling it",
       "todoIndex": 3,
-      "id": 15
+      "id": 8
+    },
+    {
+      "username": "default",
+      "projectIndex": 1,
+      "name": "Chemical delivery",
+      "desc": "Materials for the next set of reactions",
+      "duedate": "2023-05-28",
+      "notes": "May need to order more AlCl3 soon",
+      "todoIndex": 4,
+      "id": 9
     },
     {
       "username": "default",
       "projectIndex": 0,
       "name": "Fume Hood Maintenance",
-      "duedate": "2023-05-26",
       "desc": "Scheduled maintenance",
+      "duedate": "2023-06-01",
       "notes": "Won't be able to use the fume hood on this day",
       "todoIndex": 4,
-      "id": 17
-    },
-    {
-      "username": "default",
-      "projectIndex": 1,
-      "name": "After Add what hapens?",
-      "duedate": "2023-05-26",
-      "desc": "2",
-      "notes": "3",
-      "todoIndex": 3,
-      "id": 18
-    },
-    {
-      "username": "default",
-      "projectIndex": 2,
-      "name": "Working?",
-      "duedate": "2023-05-27",
-      "desc": "Or",
-      "notes": "Not ?",
-      "todoIndex": 0,
-      "id": 19
+      "id": 10
     }
   ]
 }

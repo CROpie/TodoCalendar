@@ -1,0 +1,16 @@
+css for changing the style of an input field
+
+1)
+:placeholder-shown
+:not(:placeholder-shown)
+
+if the placeholder is present (even if it just a space), then use this style
+
+
+2)
+if the element has the required attribute
+:invalid will trigger if the value is empty, :valid if it is not empty
+
+3)
+:empty triggers for elements that have no children (eg element nodes, or text)
+doesn't seem to work for input though (?)
