@@ -1,7 +1,0 @@
-IIFE is useful because can call the functions from other modules without having to re-run the entire thing
-Re-running the entire thing is problematic for many reasons ie it will try to re-render stuff (?)
-
-That means, the plan of sending the parent node won't work to make the other elements, because their functions can't be accessed
-
-But, they can be accessed by the initial funtion that called them... useful or confusing? Kind of like a hub
-    This works, but not sure if it is strange or not

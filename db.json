@@ -123,16 +123,6 @@
       "notes": "Won't be able to use the fume hood on this day",
       "todoIndex": 4,
       "id": 10
-    },
-    {
-      "username": "default",
-      "projectIndex": 1,
-      "name": "27th",
-      "duedate": "2023-05-27",
-      "desc": "Catalysis",
-      "notes": "Addition",
-      "todoIndex": 5,
-      "id": 11
     }
   ]
 }
