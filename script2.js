@@ -336,17 +336,22 @@ const DATABASE = (() => {
         getAssociatedTodoDBIDs,
         deleteProjectFromDB,
         deleteAssociatedTodosFromDB,
+        // getUserTodoList,
     };
 })();
 
 const LAYOUT = (() => {
+    let selectedView = 'list';
+
     const DOM = {
         body: document.querySelector('body'),
         display: undefined,
+        viewOptionContainer: undefined,
         dateContainer: undefined,
         projectContainer: undefined,
         newProjectContainer: undefined,
         todoContainer: undefined,
+        calendarContainer: undefined,
     };
 
     // login is just a blank layout, with no projects or todos. None of the 'buttons' have any functionality
@@ -400,25 +405,16 @@ const LAYOUT = (() => {
         appendLayout();
         assignDOM();
 
+        getSelectedViewFromLocalStorage();
+        console.log('selected view: ', selectedView);
+
+        VIEWS.init(DOM.viewOptionContainer);
         DATES.init(DOM.dateContainer);
         NEWPROJECT.init(DOM.newProjectContainer);
         PROJECTS.init(DOM.projectContainer);
         HEADER.init(DOM.display);
-        NEWTODO.init(DOM.todoContainer);
-        TODOS.init(DOM.todoContainer);
-    }
 
-    function assignDOM() {
-        // prettier-ignore
-        DOM.display = document.querySelector('#display');
-        // prettier-ignore
-        DOM.dateContainer = document.querySelector('#date-container');
-        // prettier-ignore
-        DOM.projectContainer = document.querySelector('#project-container');
-        // prettier-ignore
-        DOM.newProjectContainer = document.querySelector('#new-project-container');
-        // prettier-ignore
-        DOM.todoContainer = document.querySelector('#todo-container');
+        displayView();
     }
 
     function appendLayout() {
@@ -450,6 +446,7 @@ const LAYOUT = (() => {
 
             <div id="display">
                 <div id="todo-container"></div>
+                <div id="calendar-container"></div>
 
             </div>
 
@@ -457,7 +454,121 @@ const LAYOUT = (() => {
         return template;
     }
 
-    return { setUpLogin, init };
+    function assignDOM() {
+        // prettier-ignore
+        DOM.display = document.querySelector('#display');
+        // prettier-ignore
+        DOM.viewOptionContainer = document.querySelector('#view-option-container');
+        // prettier-ignore
+        DOM.dateContainer = document.querySelector('#date-container');
+        // prettier-ignore
+        DOM.projectContainer = document.querySelector('#project-container');
+        // prettier-ignore
+        DOM.newProjectContainer = document.querySelector('#new-project-container');
+        // prettier-ignore
+        DOM.todoContainer = document.querySelector('#todo-container');
+        // prettier-ignore
+        DOM.calendarContainer = document.querySelector('#calendar-container');
+    }
+
+    function getSelectedViewFromLocalStorage() {
+        const storedSelectedView = sessionStorage.getItem('selectedView');
+        if (!storedSelectedView) {
+            console.log('using default view (list)');
+            return;
+        } else {
+            selectedView = storedSelectedView;
+        }
+    }
+
+    // is there any benefit to this over just hiding the display of either one on click?
+    function displayView() {
+        DOM.display.children[1].replaceChildren();
+        DOM.display.children[2].replaceChildren();
+
+        if (selectedView == 'list') {
+            NEWTODO.init(DOM.todoContainer);
+            TODOS.init(DOM.todoContainer);
+        } else {
+            CALENDAR.init(DOM.calendarContainer);
+        }
+    }
+
+    function getSelectedView() {
+        return selectedView;
+    }
+
+    function changeSelectedView(clickedView) {
+        selectedView = clickedView;
+        sessionStorage.setItem('selectedView', selectedView);
+        displayView();
+    }
+
+    return {
+        setUpLogin,
+        init,
+        displayView,
+        getSelectedView,
+        changeSelectedView,
+    };
+})();
+
+const VIEWS = (() => {
+    const DOM = {
+        viewOptionContainer: undefined,
+        viewBtnNodeList: undefined,
+    };
+
+    function init(parentNode) {
+        console.log('VIEWS initializing');
+        DOM.viewOptionContainer = parentNode;
+
+        renderViewBtns();
+        bindViewBtns();
+        setSelectedView();
+    }
+
+    function renderViewBtns() {
+        const viewBtns = viewBtnsHTML();
+        DOM.viewOptionContainer.insertAdjacentHTML('beforeend', viewBtns);
+    }
+
+    function viewBtnsHTML() {
+        let template = '';
+        template += `<div class="view-option selected-view" data-view="list">List View</div>
+                    <div class="view-option" data-view="calendar">Calendar View</div>`;
+        return template;
+    }
+
+    function bindViewBtns() {
+        DOM.viewBtnNodeList = document.querySelectorAll('.view-option');
+
+        DOM.viewBtnNodeList.forEach((button) => {
+            button.addEventListener('click', clickViewBtn);
+        });
+    }
+
+    function setSelectedView() {
+        const selectedView = LAYOUT.getSelectedView();
+
+        // prettier-ignore
+        const selectedButton = document.querySelector(`[data-view="${selectedView}"]`);
+        selectView(selectedButton);
+    }
+
+    function selectView(button) {
+        // prettier-ignore
+        document.querySelector('.selected-view').classList.remove('selected-view');
+        button.classList.add('selected-view');
+    }
+
+    function clickViewBtn(event) {
+        const selectedView = event.target.dataset.view;
+        selectView(event.target);
+        LAYOUT.changeSelectedView(selectedView);
+    }
+
+    return { init };
 })();
 
 const DATES = (() => {
@@ -516,9 +627,9 @@ const DATES = (() => {
     function clickDateBtn(event) {
         dateFilterSetting = event.target.dataset.date;
         selectDate(event.target);
-        //storeFilterSettings();
         DATABASE.changeDateFilterSetting(dateFilterSetting);
-        TODOS.init();
+        // display either Todos or Calendar with the new filter setting
+        LAYOUT.displayView();
     }
 
     return { init };
@@ -538,7 +649,6 @@ const PROJECTS = (() => {
     function init(parentNode) {
         console.log('PROJECTS initializing');
         DOM.projectContainer = parentNode;
-        console.log('proj init', DOM.projectContainer);
         userProjectList = DATABASE.getProjectList();
 
         renderProjects();
@@ -609,10 +719,10 @@ const PROJECTS = (() => {
     function clickProjectBtn(event) {
         projectFilterSetting = event.target.dataset.project;
         selectProject(event.target);
-        // storeFilterSettings();
-        // TODOS.filterTodoList(projectFilterSetting);
+
         DATABASE.changeProjectFilterSetting(projectFilterSetting);
-        TODOS.init();
+        // display either Todos or Calendar with the new filter setting
+        LAYOUT.displayView();
     }
 
     // result of clicking a delete todo button
@@ -1681,161 +1791,495 @@ const RANDOMDATA = (() => {
     return { init, makeProjectList, makeTodoList };
 })();
 
-const LOGINOLD = (() => {
-    let usersList = [];
+const CALENDAR = (() => {
+    // todos from database that have been through date/project filtering
+    let filteredTodoList = [];
+    let chosenMonthTodoList = [];
 
-    const DOM = {
-        $usernameInput: document.querySelector('.modal-input-field'),
+    // store info on today's date
+    const dateInfo = {
+        todayDate: undefined,
+        dayOfWeek: undefined,
+        day: undefined,
+        month: undefined,
+        year: undefined,
     };
 
-    function init() {
-        DOM.$usernameInput.focus();
-        bindings();
-        retrieveUsernameList();
+    let chosenDate = undefined;
+    let chosenMonth = undefined;
+    let chosenYear = undefined;
+
+    const DOM = {
+        calendarContainer: undefined,
+        calendarGridContainer: undefined,
+        calendarDataContainer: undefined,
+
+        previousMonthBtn: undefined,
+        nextMonthBtn: undefined,
+        calendarTodoNodeList: undefined,
+
+        dataName: undefined,
+        dataDescription: undefined,
+        dataNotes: undefined,
+        dataProjectDropdown: undefined,
+        submitCalendarTodoBtn: undefined,
+    };
+
+    function init(parentNode) {
+        console.log('CALENDAR initializing');
+        DOM.calendarContainer = parentNode;
+
+        filteredTodoList = DATABASE.getFilteredTodoList();
+
+        getDateInfo();
+        filterTodosByMonth();
+        renderCalendar();
+        renderDataContainer();
+        bindCalendar();
     }
 
-    function bindings() {
-        DOM.$usernameInput.addEventListener('keypress', enterUsername);
+    // setting up the calendar
+    // variables
+    function getDateInfo() {
+        todayDate = new Date();
+        dateInfo.todayDate = todayDate;
+        dateInfo.dayOfWeek = todayDate.getDay();
+        dateInfo.day = todayDate.getDate();
+        dateInfo.month = todayDate.getMonth() + 1;
+        // dateInfo.month = 1;
+        dateInfo.year = todayDate.getFullYear();
+
+        chosenMonth = dateInfo.month;
+        chosenYear = dateInfo.year;
     }
 
-    function enterUsername(event) {
-        if (event.key === 'Enter') {
-            if (!DOM.$usernameInput.value) {
-                return;
-            } else {
-                let userName = DOM.$usernameInput.value;
-                userName = userName.toLowerCase();
-                checkIfDefault(userName);
-            }
-        }
+    function filterTodosByMonth() {
+        // chosenMonth is initialized as the current month, then modified by clickPrevMonth() and clickNextMonth()
+        // due date is YYYY-MM-DD
+        chosenMonthTodoList = filteredTodoList
+            .filter((todo) => todo.duedate.slice(5, 7) == chosenMonth)
+            .filter((todo) => todo.duedate.slice(0, 4) == chosenYear);
     }
 
-    function checkIfDefault(userName) {
-        if (userName === 'default') {
-            setUpDefaultData(userName);
-        } else {
-            checkIfNewUser(userName);
-        }
+    // calendar grid
+    function renderCalendar() {
+        renderLayout();
+        renderCalendarBtns();
+        renderNameOfDay();
+        renderBlanks();
+        renderDate();
+        renderCalendarTodos();
     }
 
-    /*
-    just having the sequence of awaits didn't work, even when in a for...of loop ( = await in series ?)
-    maybe a problem with json-server. From the log, could see that the deletes would be out of order, then
-    it would just give up and stop deleting things.
-    returning a value from the functions seems to help for some reason
-    */
-    async function setUpDefaultData(userName) {
-        const projectData = await retrieveProjectList(userName);
-        if (projectData) {
-            await deleteProjectData(projectData);
-        }
+    function renderLayout() {
+        const layout = layoutHTML();
+        DOM.calendarContainer.insertAdjacentHTML('beforeend', layout);
 
-        const todoData = await retrieveTodoList(userName);
-        if (todoData) {
-            await deleteTodoData(todoData);
-        }
-
-        await addProjectListToDB(userName);
-        await addTodoListToDB(userName);
-
-        setLocalStorage(userName);
-        window.location.href = 'index.html';
-    }
-
-    function checkIfNewUser(userName) {
-        if (!usersList.includes(userName)) {
-            addUsernameToDB(userName);
-        }
-
-        setLocalStorage(userName);
-        window.location.href = 'index.html';
-    }
-
-    function setLocalStorage(userName) {
         //prettier-ignore
-        window.localStorage.setItem("filterSettings", '{"projectIndex":-1,"dateIndex":"all"}')
-        window.localStorage.setItem('userName', userName);
-        window.localStorage.setItem('editFlag', false);
-        window.localStorage.setItem('view', 'list');
+        DOM.calendarGridContainer = document.querySelector('#calendar-grid-container')
+        //prettier-ignore
+        DOM.calendarDataContainer = document.querySelector('#calendar-data-container')
     }
 
-    async function retrieveUsernameList() {
-        let uri = 'http://localhost:3000/usernames';
-        const res = await fetch(uri);
-        const usersData = await res.json();
-        usersData.forEach((entry) => {
-            usersList.push(entry.username);
+    function layoutHTML() {
+        let template = '';
+        template += `<div id="calendar-grid-container"></div>`;
+        return template;
+    }
+
+    function renderCalendarBtns() {
+        const calendarBtns = calendarBtnsHTML();
+        DOM.calendarGridContainer.insertAdjacentHTML('beforeend', calendarBtns);
+    }
+
+    function calendarBtnsHTML() {
+        // prettier-ignore
+        const monthList = ['Blank', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        let template = '';
+        template += `<div id="month-menu-container">
+                        <button class="menu-button" id="prev-month-button">⬅</button>
+                        <div id="month-menu-month">${monthList[chosenMonth]} ${chosenYear}</div>
+                        <button class="menu-button" id="next-month-button">➡</button>
+                    </div>`;
+        return template;
+    }
+
+    function renderNameOfDay() {
+        // prettier-ignore
+        const dayArray = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        for (let i = 0; i < 7; i++) {
+            const nameOfDay = nameOfDayHTML(dayArray[i]);
+            DOM.calendarGridContainer.insertAdjacentHTML(
+                'beforeend',
+                nameOfDay
+            );
+        }
+    }
+
+    function nameOfDayHTML(day) {
+        let template = '';
+        template += `<div class='day'>${day}</div>`;
+        return template;
+    }
+
+    function renderBlanks() {
+        const initialDayOfWeek = getInitialDayOfWeek();
+        let numberOfBlanks = 0;
+
+        if (initialDayOfWeek === 0) {
+            numberOfBlanks = 6;
+        } else {
+            numberOfBlanks = initialDayOfWeek - 1;
+        }
+
+        for (let i = 0; i < numberOfBlanks; i++) {
+            const blankGridDate = blankGridDateHTML();
+            DOM.calendarGridContainer.insertAdjacentHTML(
+                'beforeend',
+                blankGridDate
+            );
+        }
+    }
+
+    function getInitialDayOfWeek() {
+        const initialDay = new Date(`${chosenMonth} 01 ${chosenYear}`);
+        const initialDayOfWeek = initialDay.getDay();
+        return initialDayOfWeek;
+    }
+
+    function blankGridDateHTML() {
+        let template = '';
+        template += `<div class='date' data-date='blank'></div>`;
+        return template;
+    }
+
+    function renderDate() {
+        const totalDays = getDaysInCurrentMonth();
+        for (let i = 1; i < totalDays + 1; i++) {
+            const gridDate = gridDateHTML(i);
+            DOM.calendarGridContainer.insertAdjacentHTML('beforeend', gridDate);
+        }
+    }
+
+    function getDaysInCurrentMonth() {
+        // prettier-ignore
+        const daysInMonthNonLeapArray = ['0', '31', '28', '31', '30', '31', '30', '31', '31', '30', '31', '30', '31']
+        // prettier-ignore
+        const daysInCurrentMonth = parseInt(daysInMonthNonLeapArray[chosenMonth]);
+        return daysInCurrentMonth;
+    }
+
+    function gridDateHTML(num) {
+        const data = num.toString().padStart(2, '0');
+        let template = '';
+        if (data == dateInfo.day) {
+            template += `<div class='date today-highlight' data-date=${data}>${num}</div>`;
+        } else {
+            template += `<div class='date' data-date=${data}>${num}</div>`;
+        }
+        return template;
+    }
+
+    // todos
+    function renderCalendarTodos() {
+        chosenMonthTodoList.forEach((todo) => {
+            const todoDate = todo.duedate.slice(8, 10);
+            // prettier-ignore
+            const currentTile = document.querySelector(`[data-date="${todoDate}"]`);
+            const calendarTodo = calendarTodoHTML(todo);
+            currentTile.insertAdjacentHTML('beforeend', calendarTodo);
         });
     }
 
-    async function addUsernameToDB(newUsername) {
-        const usernameEntry = { username: newUsername };
-        let uri = 'http://localhost:3000/usernames';
-        await fetch(uri, {
-            method: 'POST',
-            body: JSON.stringify(usernameEntry),
-            headers: { 'Content-Type': 'application/json' },
+    function calendarTodoHTML(todo) {
+        let snippet = '';
+        if (todo.name.length > 20) {
+            snippet = todo.name.slice(0, 18) + '...';
+        } else {
+            snippet = todo.name;
+        }
+        let template = '';
+        template += `<div class='calendar-todo projectColour${todo.projectIndex}' data-todo=${todo.todoIndex} data-project=${todo.projectIndex}>${snippet}</div>`;
+        return template;
+    }
+
+    // data area
+    function renderDataContainer() {
+        renderDataContainerLayout();
+        renderDataFields();
+    }
+
+    function renderDataContainerLayout() {
+        const dataContainerLayout = dataContainerLayoutHTML();
+        DOM.calendarContainer.insertAdjacentHTML(
+            'beforeend',
+            dataContainerLayout
+        );
+        DOM.calendarDataContainer = document.querySelector(
+            '#calendar-data-container'
+        );
+    }
+
+    function dataContainerLayoutHTML() {
+        let template = '';
+        template += `<div id="calendar-data-container"></div>`;
+        return template;
+    }
+
+    function renderDataFields() {
+        const dataFields = dataFieldsHTML();
+        DOM.calendarDataContainer.insertAdjacentHTML('beforeend', dataFields);
+
+        DOM.dataName = document.querySelector('#data-name');
+        DOM.dataDescription = document.querySelector('#data-description');
+        DOM.dataNotes = document.querySelector('#data-notes');
+    }
+
+    function dataFieldsHTML() {
+        let template = '';
+        template += `
+            <div class="data-div">
+                <div class="data-heading">Name</div>
+                <div id="data-name" class="data"></div>
+            </div>
+
+            <div class="data-div">
+                <div class="data-heading">Description</div>
+                <div id="data-description" class="data"></div>
+            </div>
+
+            <div class="data-div">
+                <div class="data-heading">Notes</div>
+                <div id="data-notes" class="data"></div>
+            </div>`;
+        return template;
+    }
+
+    // bindings
+    function bindCalendar() {
+        bindCalendarBtns();
+        bindClickCalendarDate();
+        bindMouseoverCalendarTodo();
+    }
+
+    function bindCalendarBtns() {
+        DOM.previousMonthBtn = document.querySelector('#prev-month-button');
+        DOM.previousMonthBtn.addEventListener('click', clickPrevMonthBtn);
+
+        DOM.nextMonthBtn = document.querySelector('#next-month-button');
+        DOM.nextMonthBtn.addEventListener('click', clickNextMonthBtn);
+    }
+
+    function bindClickCalendarDate() {
+        // prettier-ignore
+        DOM.calendarGridContainer.addEventListener('click', clickCalendarDate, {capture: true,});
+    }
+
+    function bindMouseoverCalendarTodo() {
+        DOM.calendarTodoNodeList = document.querySelectorAll('.calendar-todo');
+        DOM.calendarTodoNodeList.forEach((button) => {
+            button.addEventListener('mouseover', clickCalendarTodo);
         });
     }
 
-    async function retrieveProjectList(userName) {
-        let uri = `http://localhost:3000/projects?username=${userName}`;
-        const res = await fetch(uri);
-        const projectData = await res.json();
-        if (projectData.length > 0) {
-            return projectData;
-        } else {
-            return false;
+    // result of clicking the forward or back buttons on the calendar
+    function clickPrevMonthBtn() {
+        chosenMonth -= 1;
+        if (chosenMonth === 0) {
+            chosenMonth = 12;
+            chosenYear -= 1;
+        }
+
+        DOM.calendarContainer.replaceChildren('');
+        filterTodosByMonth();
+        renderCalendar();
+        renderDataContainer();
+        bindCalendar();
+    }
+
+    function clickNextMonthBtn() {
+        chosenMonth += 1;
+        if (chosenMonth === 13) {
+            chosenMonth = 1;
+            chosenYear += 1;
+        }
+
+        DOM.calendarContainer.replaceChildren('');
+        filterTodosByMonth();
+        renderCalendar();
+        renderDataContainer();
+        bindCalendar();
+    }
+
+    /* result of clicking the grid */
+    // click a blank area: clear data
+    // click a date: set up new todo
+    function clickCalendarDate(event) {
+        const clickedCalendarDate = event.target.dataset.date;
+        resetCalendarDataContainer();
+
+        if (!clickedCalendarDate) {
+            return;
+        }
+
+        // used for finding the date for a new todo
+        chosenDate = clickedCalendarDate;
+
+        setupNewCalendarTodo();
+    }
+
+    function resetCalendarDataContainer() {
+        DOM.calendarDataContainer.replaceChildren('');
+        renderDataFields();
+    }
+
+    function setupNewCalendarTodo() {
+        allowEditingOfDataFields();
+        renderProjectDropdown();
+        populateProjectDropdown();
+        renderSubmitCalendarTodoBtn();
+        bindSubmitCalendarTodoBtn();
+    }
+
+    function allowEditingOfDataFields() {
+        DOM.dataName.setAttribute('contentEditable', 'true');
+        DOM.dataName.classList.add('data-input-field');
+        DOM.dataName.focus();
+
+        DOM.dataDescription.setAttribute('contentEditable', 'true');
+        DOM.dataDescription.classList.add('data-input-field');
+
+        DOM.dataNotes.setAttribute('contentEditable', 'true');
+        DOM.dataNotes.classList.add('data-input-field');
+    }
+
+    function renderProjectDropdown() {
+        const projectDropdown = projectDropdownHTML();
+        DOM.calendarDataContainer.insertAdjacentHTML(
+            'beforeend',
+            projectDropdown
+        );
+        DOM.dataProjectDropdown = document.querySelector(
+            '#data-project-dropdown'
+        );
+    }
+
+    function projectDropdownHTML() {
+        let template = '';
+        template += `<div class="data-div">
+                        <select id="data-project-dropdown" class="data-input-field" required></select>
+                    </div>`;
+        return template;
+    }
+
+    function populateProjectDropdown() {
+        const blankOption = blankOptionHTML();
+        DOM.dataProjectDropdown.insertAdjacentHTML('beforeend', blankOption);
+
+        const projectList = DATABASE.getProjectList();
+
+        projectList.forEach((project) => {
+            const projectOption = projectOptionHTML(project);
+            DOM.dataProjectDropdown.insertAdjacentHTML(
+                'beforeend',
+                projectOption
+            );
+        });
+
+        DOM.dataProjectDropdown.children[0].selected = true;
+        DOM.dataProjectDropdown.children[0].value = '';
+        DOM.dataProjectDropdown.children[0].disabled = true;
+
+        // Auto-select the current project (if not All)
+        // only works when projectIndexes are in order from 1 ...
+        const projectIndex = DATABASE.getFilterSettings().projectIndex;
+        if (projectIndex > -1) {
+            DOM.dataProjectDropdown.selectedIndex = parseInt(projectIndex) + 1;
         }
     }
 
-    async function deleteProjectData(projectData) {
-        for (project of projectData) {
-            let uri = `http://localhost:3000/projects/${project.id}`;
-            const res = await fetch(uri, { method: 'DELETE' });
-        }
+    function blankOptionHTML() {
+        let template = '';
+        template += `<option class="dropdown-option" value="disabled">Choose project: </option>`;
+
+        return template;
     }
 
-    async function retrieveTodoList(userName) {
-        let uri = `http://localhost:3000/todos?username=${userName}`;
-        const res = await fetch(uri);
-        const todoData = await res.json();
-        if (todoData.length > 0) {
-            return todoData;
-        } else {
-            return false;
-        }
+    function projectOptionHTML(project) {
+        let template = '';
+        template += `<option class="dropdown-option" value="${project.projectIndex}">${project.projectName}</option>`;
+
+        return template;
     }
 
-    async function deleteTodoData(todoData) {
-        for (todo of todoData) {
-            let uri = `http://localhost:3000/todos/${todo.id}`;
-            const res = await fetch(uri, { method: 'DELETE' });
-        }
+    function renderSubmitCalendarTodoBtn() {
+        const submitCalendarTodoBtn = submitCalendarTodoBtnHTML();
+        // prettier-ignore
+        DOM.calendarDataContainer.insertAdjacentHTML('beforeend', submitCalendarTodoBtn);
     }
 
-    async function addProjectListToDB(userName) {
-        const projectList = RandomData.makeProjectList(userName);
-        for (project of projectList) {
-            let uri = 'http://localhost:3000/projects';
-            await fetch(uri, {
-                method: 'POST',
-                body: JSON.stringify(project),
-                headers: { 'Content-Type': 'application/json' },
-            });
-        }
+    function submitCalendarTodoBtnHTML() {
+        let template = '';
+        template += `<div id="submit-calendar-todo-container">
+                        <button id="submit-calendar-todo">✔</button>
+                    </div>`;
+        return template;
     }
 
-    async function addTodoListToDB(userName) {
-        const todoList = RandomData.makeTodoList(userName);
-        for (todo of todoList) {
-            let uri = 'http://localhost:3000/todos';
-            await fetch(uri, {
-                method: 'POST',
-                body: JSON.stringify(todo),
-                headers: { 'Content-Type': 'application/json' },
-            });
-        }
-        return true;
+    function bindSubmitCalendarTodoBtn() {
+        // prettier-ignore
+        DOM.submitCalendarTodoBtn = document.querySelector('#submit-calendar-todo')
+        // prettier-ignore
+        DOM.submitCalendarTodoBtn.addEventListener('click', clickSubmitCalendarTodoBtn)
     }
+
+    /* result of clicking to submit a new todo from the calendar */
+    function clickSubmitCalendarTodoBtn() {
+        // include data checks
+
+        const newTodo = getNewTodoData();
+        DATABASE.addNewTodoToDB(newTodo);
+    }
+
+    function getNewTodoData() {
+        const currentUser = DATABASE.getUsername();
+        const projectIndex = DOM.dataProjectDropdown.selectedIndex - 1;
+        const newTodoIndex = DATABASE.getNewTodoIndex(projectIndex);
+
+        const twoDigitMonth = chosenMonth.toString().padStart(2, '0');
+
+        const chosenDateString = `${chosenYear}-${twoDigitMonth}-${chosenDate}`;
+
+        const newTodo = {
+            username: currentUser,
+            projectIndex: projectIndex,
+            name: DOM.dataName.textContent,
+            duedate: chosenDateString,
+            desc: DOM.dataDescription.textContent,
+            notes: DOM.dataNotes.textContent,
+            todoIndex: newTodoIndex,
+        };
+        return newTodo;
+    }
+
+    /* result of mousover on a todo on the grid */
+    function clickCalendarTodo(event) {
+        const projectIndex = event.target.dataset.project;
+        const todoIndex = event.target.dataset.todo;
+        const currentTodo = findTodo(projectIndex, todoIndex);
+
+        DOM.dataName.textContent = currentTodo.name;
+        DOM.dataDescription.textContent = currentTodo.desc;
+        DOM.dataNotes.textContent = currentTodo.notes;
+    }
+
+    function findTodo(projectIndex, todoIndex) {
+        const currentTodo = chosenMonthTodoList
+            .filter((todo) => todo.projectIndex == projectIndex)
+            .find((todo) => todo.todoIndex == todoIndex);
+
+        return currentTodo;
+    }
+
+    return { init };
 })();

@@ -29,7 +29,7 @@
       "projectIndex": 1,
       "name": "Mitsunobu reaction",
       "desc": "Book 7 page 12",
-      "duedate": "2023-05-26",
+      "duedate": "2023-05-27",
       "notes": "Didn't run under nitrogen last time and it was still fine. Repeat reaction to make more starting material",
       "todoIndex": 0,
       "id": 1
@@ -39,7 +39,7 @@
       "projectIndex": 0,
       "name": "Waste Disposal",
       "desc": "By 10:00 at the latest",
-      "duedate": "2023-05-27",
+      "duedate": "2023-05-28",
       "notes": "Take down the TLC plates too",
       "todoIndex": 0,
       "id": 2
@@ -49,7 +49,7 @@
       "projectIndex": 1,
       "name": "Wash glassware",
       "desc": "Do the syringe needles top",
-      "duedate": "2023-05-28",
+      "duedate": "2023-05-29",
       "notes": "Make sure to put in the oven in preparation for tomorrow's reaction",
       "todoIndex": 1,
       "id": 3
@@ -59,7 +59,7 @@
       "projectIndex": 0,
       "name": "Waste Solvent Disposal",
       "desc": "10:00 at the lobby",
-      "duedate": "2023-05-29",
+      "duedate": "2023-05-30",
       "notes": "Make sure to bring back some empty carboys (if available)",
       "todoIndex": 1,
       "id": 4
@@ -69,7 +69,7 @@
       "projectIndex": 1,
       "name": "BCl3/AlCl3 reaction",
       "desc": "Book 7 page 10",
-      "duedate": "2023-06-11",
+      "duedate": "2023-06-12",
       "notes": "Enough material for a 1g scale reaction",
       "todoIndex": 2,
       "id": 5
@@ -79,7 +79,7 @@
       "projectIndex": 0,
       "name": "Liquid Nitrogen",
       "desc": "Take it from floor 3 when it arrives",
-      "duedate": "2023-05-27",
+      "duedate": "2023-05-28",
       "notes": "Asada has been doing freeze-pump-thaw cycles recently, so need to fill it to the brim",
       "todoIndex": 2,
       "id": 6
@@ -89,7 +89,7 @@
       "projectIndex": 1,
       "name": "Sonogashira coupling",
       "desc": "Book 7 page 11",
-      "duedate": "2023-05-27",
+      "duedate": "2023-05-28",
       "notes": "Use the fresh alkyne when it arrives",
       "todoIndex": 3,
       "id": 7
@@ -99,7 +99,7 @@
       "projectIndex": 0,
       "name": "Dry Ice",
       "desc": "Move it to the storage container",
-      "duedate": "2023-05-28",
+      "duedate": "2023-05-29",
       "notes": "Be sure to dispose of the plastic inside the container before filling it",
       "todoIndex": 3,
       "id": 8
@@ -109,7 +109,7 @@
       "projectIndex": 1,
       "name": "Chemical delivery",
       "desc": "Materials for the next set of reactions",
-      "duedate": "2023-05-28",
+      "duedate": "2023-05-29",
       "notes": "May need to order more AlCl3 soon",
       "todoIndex": 4,
       "id": 9
@@ -119,10 +119,20 @@
       "projectIndex": 0,
       "name": "Fume Hood Maintenance",
       "desc": "Scheduled maintenance",
-      "duedate": "2023-06-01",
+      "duedate": "2023-06-02",
       "notes": "Won't be able to use the fume hood on this day",
       "todoIndex": 4,
       "id": 10
+    },
+    {
+      "username": "default",
+      "projectIndex": 1,
+      "name": "27th",
+      "duedate": "2023-05-27",
+      "desc": "Catalysis",
+      "notes": "Addition",
+      "todoIndex": 5,
+      "id": 11
     }
   ]
 }

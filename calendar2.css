@@ -1,0 +1,206 @@
+:root {
+    --calendar-background: none;
+    --BHS-height: 700px;
+}
+
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--calendar-background);
+}
+
+#title {
+    margin: 0rem 5rem;
+    color: white;
+    font-size: 3rem;
+    padding-left: 2rem;
+}
+
+#calendar-container {
+    display: flex;
+}
+
+#calendar-grid-container {
+    height: 100vh;
+
+    margin: 0rem 1rem;
+    border: 2px solid red;
+    background-color: var(--calendar-background);
+
+    display: grid;
+    width: 90%;
+
+    grid-template-columns: repeat(7, 14.28%);
+    grid-template-rows: 50px 50px repeat(6, 150px);
+}
+
+#month-menu-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    grid-column: 1/8;
+}
+
+.menu-button {
+    background-color: transparent;
+    font-size: 3rem;
+    color: orange;
+    padding: 0rem 2rem;
+    text-shadow: 2px 2px 2px black;
+}
+
+#month-menu-month {
+    color: orange;
+    font-size: 3rem;
+    text-shadow: 2px 2px 2px black;
+}
+
+.menu-button:hover {
+    color: blueviolet;
+}
+
+#calendar-data-container {
+    border: 2px solid lime;
+    width: 20vw;
+    margin-right: 1rem;
+}
+
+.date,
+.day {
+    color: white;
+    border: 1px solid white;
+    background-color: none;
+    padding: 0.5rem;
+}
+
+.day {
+    font-size: 2rem;
+}
+
+.date {
+    font-size: 1rem;
+}
+
+.date:hover {
+    background-color: rgba(138, 43, 226, 0.7);
+}
+
+.date[data-date='blank'] {
+    background-color: var(--calendar-background);
+    border: none;
+}
+
+.calendar-todo {
+    font-size: 0.75rem;
+    color: black;
+
+    border-radius: 1rem;
+    background-color: lightgreen;
+    margin: 0.25rem 0.5rem 0rem 0.5rem;
+    padding: 0.1rem 0.5rem;
+    cursor: pointer;
+}
+
+.calendar-todo:hover {
+    background-color: yellow;
+}
+
+.data-div {
+    margin-bottom: 3rem;
+    padding: 1rem;
+}
+
+.data-heading {
+    color: yellow;
+    margin-left: 1rem;
+    font-size: 1.5rem;
+}
+
+.data {
+    color: white;
+    font-size: 1rem;
+    padding-top: 0.5rem;
+}
+
+.projectColour0 {
+    background-color: red;
+}
+
+.projectColour1 {
+    background-color: orange;
+}
+
+.projectColour2 {
+    background-color: yellow;
+}
+
+.projectColour3 {
+    background-color: green;
+}
+
+.projectColour4 {
+    background-color: blue;
+}
+
+.today-highlight {
+    color: lime;
+}
+
+.data-input-field {
+    box-shadow: 0 0 10px #9ecaed;
+    border-radius: 7px;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+}
+
+#submit-calendar-todo-container {
+    display: flex;
+    justify-content: end;
+}
+
+#submit-calendar-todo {
+    font-size: 2rem;
+    outline: none;
+    border: none;
+    background-color: transparent;
+    color: yellow;
+    margin-right: 2rem;
+}
+
+#submit-calendar-todo:hover {
+    color: green;
+}
+
+#data-project-dropdown {
+    border: 2px solid purple;
+}
+
+/* dropdown-specific */
+#data-project-dropdown {
+    background-color: transparent;
+    font-size: 1rem;
+    width: 100%;
+    color: orange;
+}
+
+option {
+    color: white;
+    background-color: black;
+}
+
+option:checked {
+    color: orange;
+}
+
+option:hover {
+    background-color: blueviolet;
+}
+
+#project-dropdown:invalid,
+select option[value=''] {
+    color: grey;
+}
